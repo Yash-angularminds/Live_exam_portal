@@ -1,0 +1,16 @@
+.App {
+  text-align: center;
+}
+
+tbody {
+  min-height:20px;
+}
+
+tbody .icons
+  {
+      display: none;
+  }
+  tr:hover .icons
+  {
+    display:block;
+  }

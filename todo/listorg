@@ -1,0 +1,133 @@
+import React,{useState, useEffect} from 'react'
+import { useNavigate } from 'react-router-dom'
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEdit, faTrashAlt} from '@fortawesome/free-solid-svg-icons'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css';
+
+function List() {
+    let localData = []
+    //let completedTasks = []
+    localData = JSON.parse(localStorage.getItem('list'))
+    let navigate = useNavigate()
+
+    
+
+    const [localList, setLocalList] = useState()
+
+    useEffect(() => {
+        setLocalList(localData)
+    },[])
+
+    const handleDragEnd = (results) => {
+        let tempUser = [...localList]
+        let [selectedRow] = tempUser.splice(results.source.index, 1) 
+        tempUser.splice(results.destination.index, 0 , selectedRow)
+        setLocalList(tempUser)
+        localStorage.setItem("list", JSON.stringify(tempUser))
+    }
+
+    const deleteItem = (key) => {
+        localData.splice(key,1)
+        if(localData.length > 0)
+    {
+      for(let i=0;i<localData.length;i++)
+      {
+        localData[i].id = i
+      }
+    localStorage.setItem("list",JSON.stringify(localData));
+    }
+    else{
+      localStorage.clear()
+      navigate('/')
+    }
+
+    const notify = () => {
+        toast("Deleted")
+    }
+    
+    navigate('/list')
+    }
+
+    const editItem = (key) => {
+         navigate('/edit', {state:key})
+        
+    }
+
+    const updateStatus = (key) => {
+        localData[key].status = "done"
+        console.log(key);
+        //completedTasks.push(localData[key])
+        localStorage.setItem("list",JSON.stringify(localData));
+        navigate('/list')
+        //console.log(completedTasks);
+    }
+
+    return (
+        <div class="m-5 mr-5">
+            <h3>Tasks</h3>
+            <DragDropContext onDragEnd = {(results) => handleDragEnd(results)}>
+                <table class="table table-info">
+                    <thead>
+                        <tr>
+                            <td>Title</td>
+                            <td>Details</td>
+                            <td>Date</td>
+                        </tr>
+                    </thead>
+                    <Droppable droppableId="tbody" >
+                        {(provided) => (
+                            <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                                {localData? localData.filter(localData => localData.status === 'to-do').map((data,index) => (
+                                    <Draggable draggableId={data.title} index={data.id} key={data.id}>
+                                        {
+                                            (provided) => (
+                                                <tr ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} key={data.id}>
+                                                    <td>{data.title}</td>
+                                                    <td>{data.details}</td>
+                                                    <td>{data.date}</td>
+                                                    <td>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" value="" onClick = {() => updateStatus(index)} />
+                                                        </div>
+                                                    </td> 
+                                                    <td ><FontAwesomeIcon id={index} icon={faEdit} onClick={() => editItem(data)}  /></td>
+                                                    <td><FontAwesomeIcon icon={faTrashAlt} onClick={() => deleteItem(index)}/></td>
+                                                </tr>
+                                            )
+                                        }
+                                    </Draggable>
+                                )) : navigate('/')}
+                                {provided.placeholder}
+                            </tbody>
+                        )}
+                    </Droppable>
+
+                </table>
+            </DragDropContext >
+                <button  class="btn btn-primary mb-5"  onClick={() => navigate('/add')}>Add task</button>
+                <h5>Completed Tasks:</h5>
+                <table class="table table-info">
+                    <thead>
+                        <tr>
+                            <td>Title</td>
+                            <td>Details</td>
+                            <td>Date</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {localData? localData.filter(localData => localData.status === 'done').map((data,index) => (
+                      <tr>
+                        <td style={{textDecorationLine: 'line-through', textDecorationStyle: 'solid'}}>{data.title}</td>
+                        <td style={{textDecorationLine: 'line-through', textDecorationStyle: 'solid'}}>{data.details}</td>
+                        <td style={{textDecorationLine: 'line-through', textDecorationStyle: 'solid'}}>{data.date}</td>
+                       </tr>
+                    )) : <p>No completed Tasks</p>}
+                    </tbody>
+                </table>
+        </div>
+    )
+}
+
+export default List
